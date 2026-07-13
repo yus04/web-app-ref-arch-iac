@@ -31,6 +31,9 @@ param deployDdosProtection bool = false
 @description('Resource ID of a DDoS protection plan (required when deployDdosProtection is true).')
 param ddosProtectionPlanId string = ''
 
+@description('Deploy a NAT Gateway to give the App Service integration subnet a deterministic outbound internet path (required for Oryx build / App Insights telemetry when routing all egress through the VNet).')
+param deployNatGateway bool = true
+
 @description('Tags applied to all resources.')
 param tags object = {}
 
@@ -104,6 +107,37 @@ resource privateEndpointNsg 'Microsoft.Network/networkSecurityGroups@2023-11-01'
   properties: {}
 }
 
+// NAT Gateway providing outbound internet access for the App Service integration subnet.
+resource natGatewayPublicIp 'Microsoft.Network/publicIPAddresses@2023-11-01' = if (deployNatGateway) {
+  name: 'pip-nat-${vnetName}'
+  location: location
+  tags: tags
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+  }
+}
+
+resource natGateway 'Microsoft.Network/natGateways@2023-11-01' = if (deployNatGateway) {
+  name: 'nat-${vnetName}'
+  location: location
+  tags: tags
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    idleTimeoutInMinutes: 4
+    publicIpAddresses: [
+      {
+        id: natGatewayPublicIp.id
+      }
+    ]
+  }
+}
+
 resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   name: vnetName
   location: location
@@ -135,6 +169,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
           networkSecurityGroup: {
             id: appServiceNsg.id
           }
+          natGateway: deployNatGateway ? {
+            id: natGateway.id
+          } : null
           delegations: [
             {
               name: 'appservice-delegation'
