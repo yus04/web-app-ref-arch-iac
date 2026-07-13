@@ -101,9 +101,11 @@ resource appServiceAdmin 'Microsoft.DBforPostgreSQL/flexibleServers/administrato
 }
 
 // Optional additional (human/group) administrator for manual database management.
-resource additionalAdmin 'Microsoft.DBforPostgreSQL/flexibleServers/administrators@2024-08-01' = if (deployAdditionalAdmin) {
+// Only deployed when a distinct object ID is supplied, to avoid colliding with the
+// App Service managed identity administrator above.
+resource additionalAdmin 'Microsoft.DBforPostgreSQL/flexibleServers/administrators@2024-08-01' = if (deployAdditionalAdmin && !empty(additionalAdminObjectId) && additionalAdminObjectId != appServicePrincipalId) {
   parent: postgresServer
-  name: empty(additionalAdminObjectId) ? appServicePrincipalId : additionalAdminObjectId
+  name: empty(additionalAdminObjectId) ? 'placeholder' : additionalAdminObjectId
   properties: {
     principalName: additionalAdminName
     principalType: additionalAdminType
