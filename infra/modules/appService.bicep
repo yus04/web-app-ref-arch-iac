@@ -26,10 +26,10 @@ param pythonVersion string = '3.12'
 @description('App Service plan SKU name.')
 param skuName string = 'P1v3'
 
-@description('Number of instances (>= 3 for zone redundancy).')
+@description('Number of instances (>= 2 for zone redundancy).')
 param capacity int = 3
 
-@description('Enable zone redundancy for the App Service plan.')
+@description('Request zone redundancy. Automatically ignored when the selected SKU does not support it.')
 param zoneRedundant bool = true
 
 @description('Deploy Application Insights integration settings.')
@@ -114,18 +114,38 @@ var storageSettings = enableStorage ? [
   }
 ] : []
 
+// Zone redundancy is only supported on Premium v2 / Premium v3 SKUs.
+// For any other SKU (Basic, Standard, ...) it must not be requested, otherwise
+// the deployment fails with 'SkuDoesNotSupportZoneRedundancy'.
+var zoneRedundantSupportedSkus = [
+  'P1v2'
+  'P2v2'
+  'P3v2'
+  'P0v3'
+  'P1v3'
+  'P2v3'
+  'P3v3'
+  'P1mv3'
+  'P2mv3'
+  'P3mv3'
+]
+var skuSupportsZoneRedundancy = contains(zoneRedundantSupportedSkus, skuName)
+var effectiveZoneRedundant = zoneRedundant && skuSupportsZoneRedundancy
+// Zone-redundant plans require at least 2 instances.
+var effectiveCapacity = effectiveZoneRedundant ? max(capacity, 2) : capacity
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: appServicePlanName
   location: location
   tags: tags
   sku: {
     name: skuName
-    capacity: capacity
+    capacity: effectiveCapacity
   }
   kind: 'linux'
   properties: {
     reserved: true
-    zoneRedundant: zoneRedundant
+    zoneRedundant: effectiveZoneRedundant
   }
 }
 

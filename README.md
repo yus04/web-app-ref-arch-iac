@@ -147,10 +147,10 @@ App Service プランの SKU やインスタンス数は、以下のパラメー
 | パラメーター | 既定値 | 説明 |
 | --- | --- | --- |
 | `appServiceSkuName` | `P1v3` | App Service プランの SKU。`B1`〜`B3` / `S1`〜`S3` / `P1v2`〜`P3v2` / `P0v3`〜`P3v3` / `P1mv3`〜`P3mv3` から選択 |
-| `appServicePlanCapacity` | `3` | インスタンス数 (1〜30)。ゾーン冗長時は 3 以上が必要 |
-| `appServiceZoneRedundant` | `true` | ゾーン冗長の有効化 |
+| `appServicePlanCapacity` | `3` | インスタンス数 (1〜30)。ゾーン冗長時は自動で 2 以上に調整されます |
+| `appServiceZoneRedundant` | `true` | ゾーン冗長の希望値。SKU が非対応の場合は自動的に無効化されます |
 
-> **ゾーン冗長の条件**: `appServiceZoneRedundant` を `true` にする場合は、Premium v2/v3 SKU (`Pxv2` / `Pxv3`) かつ `appServicePlanCapacity` が 3 以上である必要があります。Basic (`Bx`) / Standard (`Sx`) SKU やコスト最適化を優先する場合は、`appServiceZoneRedundant` を `false` に設定してください。
+> **ゾーン冗長の自動判定**: ゾーン冗長は Premium v2/v3 SKU (`Pxv2` / `Pxv3` / `Pxmv3`) のみでサポートされます。`appServiceZoneRedundant` を `true` にしていても、Basic (`Bx`) / Standard (`Sx`) などの非対応 SKU を選択した場合は、デプロイエラー (`SkuDoesNotSupportZoneRedundancy`) を避けるために **自動的にゾーン冗長が無効化**されます。ゾーン冗長を確実に有効化したい場合は Premium SKU を選択してください。
 
 ---
 
