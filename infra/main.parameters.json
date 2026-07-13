@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workloadName": {
+      "value": "webapp"
+    },
+    "tags": {
+      "value": {
+        "workload": "web-app-ref-arch",
+        "environment": "dev"
+      }
+    },
+    "deployApplicationGateway": {
+      "value": true
+    },
+    "deployPostgreSql": {
+      "value": true
+    },
+    "deployStorage": {
+      "value": true
+    },
+    "deployApplicationInsights": {
+      "value": true
+    },
+    "deployDdosProtection": {
+      "value": false
+    },
+    "appServiceSkuName": {
+      "value": "P1v3"
+    },
+    "appServicePlanCapacity": {
+      "value": 3
+    },
+    "appServiceZoneRedundant": {
+      "value": true
+    },
+    "vnetAddressPrefix": {
+      "value": "10.0.0.0/16"
+    },
+    "appGatewaySubnetPrefix": {
+      "value": "10.0.1.0/24"
+    },
+    "appServiceSubnetPrefix": {
+      "value": "10.0.2.0/24"
+    },
+    "privateEndpointSubnetPrefix": {
+      "value": "10.0.3.0/24"
+    },
+    "deployAdditionalPostgresAdmin": {
+      "value": false
+    },
+    "additionalPostgresAdminObjectId": {
+      "value": ""
+    },
+    "additionalPostgresAdminName": {
+      "value": ""
+    },
+    "additionalPostgresAdminType": {
+      "value": "User"
+    }
+  }
+}
