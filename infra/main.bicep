@@ -248,7 +248,7 @@ module appService 'modules/appService.bicep' = {
     capacity: appServicePlanCapacity
     zoneRedundant: appServiceZoneRedundant
     enableApplicationInsights: deployApplicationInsights
-    applicationInsightsConnectionString: deployApplicationInsights ? monitoring.outputs.connectionString : ''
+    applicationInsightsConnectionString: deployApplicationInsights ? monitoring!.outputs.connectionString : ''
     enablePostgres: deployPostgreSql
     postgresHost: postgresFqdn
     postgresDatabase: postgresDatabaseName
@@ -293,7 +293,6 @@ module roleAssignments 'modules/roleAssignments.bicep' = {
   }
   dependsOn: [
     storage
-    monitoring
     keyVault
   ]
 }
@@ -321,11 +320,11 @@ module postgresPrivateEndpoint 'modules/privateEndpoint.bicep' = if (deployPostg
     name: 'pe-${postgresServerName}'
     location: location
     subnetId: network.outputs.privateEndpointSubnetId
-    privateLinkServiceId: postgres.outputs.postgresServerId
+    privateLinkServiceId: postgres!.outputs.postgresServerId
     groupIds: [
       'postgresqlServer'
     ]
-    privateDnsZoneId: postgresDnsZone.outputs.privateDnsZoneId
+    privateDnsZoneId: postgresDnsZone!.outputs.privateDnsZoneId
     tags: tags
   }
 }
@@ -336,11 +335,11 @@ module keyVaultPrivateEndpoint 'modules/privateEndpoint.bicep' = if (deployAppli
     name: 'pe-${keyVaultName}'
     location: location
     subnetId: network.outputs.privateEndpointSubnetId
-    privateLinkServiceId: keyVault.outputs.keyVaultId
+    privateLinkServiceId: keyVault!.outputs.keyVaultId
     groupIds: [
       'vault'
     ]
-    privateDnsZoneId: keyVaultDnsZone.outputs.privateDnsZoneId
+    privateDnsZoneId: keyVaultDnsZone!.outputs.privateDnsZoneId
     tags: tags
   }
 }
@@ -351,11 +350,11 @@ module storagePrivateEndpoint 'modules/privateEndpoint.bicep' = if (deployStorag
     name: 'pe-${storageAccountName}'
     location: location
     subnetId: network.outputs.privateEndpointSubnetId
-    privateLinkServiceId: storage.outputs.storageAccountId
+    privateLinkServiceId: storage!.outputs.storageAccountId
     groupIds: [
       'blob'
     ]
-    privateDnsZoneId: blobDnsZone.outputs.privateDnsZoneId
+    privateDnsZoneId: blobDnsZone!.outputs.privateDnsZoneId
     tags: tags
   }
 }
@@ -392,4 +391,4 @@ output keyVaultName string = deployApplicationGateway ? keyVaultName : ''
 output postgresServerName string = deployPostgreSql ? postgresServerName : ''
 output postgresFqdn string = deployPostgreSql ? postgresFqdn : ''
 output postgresDatabaseName string = deployPostgreSql ? postgresDatabaseName : ''
-output applicationGatewayPublicIp string = deployApplicationGateway ? applicationGateway.outputs.publicIpAddress : ''
+output applicationGatewayPublicIp string = deployApplicationGateway ? applicationGateway!.outputs.publicIpAddress : ''

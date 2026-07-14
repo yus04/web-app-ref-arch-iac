@@ -18,9 +18,10 @@ Azure 上でセキュアかつ可用性の高い Web アプリケーションを
 - [利用手順](#利用手順)
   - [1. リポジトリの取得](#1-リポジトリの取得)
   - [2. パラメーターファイルの編集](#2-パラメーターファイルの編集)
-  - [3. リソースグループの作成](#3-リソースグループの作成)
-  - [4. デプロイの実行](#4-デプロイの実行)
-  - [5. デプロイ結果の確認](#5-デプロイ結果の確認)
+  - [3. デプロイ前のクォータ確認 (推奨)](#3-デプロイ前のクォータ確認-推奨)
+  - [4. リソースグループの作成](#4-リソースグループの作成)
+  - [5. デプロイの実行](#5-デプロイの実行)
+  - [6. デプロイ結果の確認](#6-デプロイ結果の確認)
 - [デプロイしたリソースに応じた個別手順](#デプロイしたリソースに応じた個別手順)
   - [Application Gateway をデプロイした場合: カスタムドメイン / HTTPS の設定](#application-gateway-をデプロイした場合-カスタムドメイン--https-の設定)
   - [PostgreSQL をデプロイした場合](#postgresql-をデプロイした場合)
@@ -160,6 +161,7 @@ App Service プランの SKU やインスタンス数は、以下のパラメー
 
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (2.60 以降を推奨)
 - Bicep CLI (Azure CLI に同梱。`az bicep install` で導入可能)
+- [`jq`](https://jqlang.github.io/jq/) / `curl` (クォータ確認スクリプト `scripts/check-quota.sh` で使用)
 - 有効な Azure サブスクリプション
 
 ### 必要な Azure ロール
@@ -195,7 +197,43 @@ az account set --subscription <SUBSCRIPTION_ID>
 - `appServiceSkuName` / `appServicePlanCapacity` / `appServiceZoneRedundant`: App Service プランの SKU・インスタンス数・ゾーン冗長 (詳細は [App Service の SKU / スケール設定](#app-service-の-sku--スケール設定) を参照)
 - (任意) `deployAdditionalPostgresAdmin` を `true` にし、`additionalPostgresAdminObjectId` / `additionalPostgresAdminName` / `additionalPostgresAdminType` を設定すると、PostgreSQL に手動管理用の Entra 管理者 (人間やグループ) を追加できます。
 
-### 3. リソースグループの作成
+### 3. デプロイ前のクォータ確認 (推奨)
+
+デプロイ先のリージョンで **クォータ / SKU の空きがあり、デプロイ可能か** を事前確認します。App Service (Premium v3 など) や PostgreSQL はリージョン・SKU によっては提供がない・クォータ不足の場合があり、デプロイ本番で初めてエラーになることがあるためです。
+
+> **補足**: `az deployment group what-if` はリソースの差分プレビューであり、クォータは確認しません。クォータの事前確認には本スクリプトを使用してください。
+
+**前提**: `az login` 済みであること、および [`jq`](https://jqlang.github.io/jq/) / `curl` がインストール済みであること。
+
+```bash
+# 既定のリージョン一覧を確認 (全 Azure パブリックリージョン 41 拠点、main.parameters.json の設定を自動反映)
+./scripts/check-quota.sh
+
+# リージョンを指定して確認
+./scripts/check-quota.sh -l japaneast,eastus2,westeurope
+
+# 確認する App Service SKU を指定 (既定: B1,P0V3 に加え設定 SKU)
+./scripts/check-quota.sh --skus B1,P0V3,P1V3
+
+# 同時実行数 / タイムアウトを調整 (遅いネットワークでのチューニング)
+./scripts/check-quota.sh --jobs 12 --timeout 20
+
+# what-if による最終検証コマンド例も表示
+./scripts/check-quota.sh --show-validate
+```
+
+> スクリプトはアクセストークンを 1 回だけ取得し、以降は `curl` で ARM REST を **並列**呼び出すため高速に完了します。
+
+スクリプトは以下をリージョンごとに確認し、最後に `OK` / `NG` のサマリを表示します。
+
+- **App Service**: SKU のリージョン提供状況 (Linux ワーカー)。既定で `B1` / `P0V3` と設定中の SKU を確認
+- **PostgreSQL Flexible Server**: 設定中の SKU / ティアの提供状況
+- **ストレージ**: リージョンあたりのアカウント数クォータ
+- **ネットワーク**: 仮想ネットワーク / Public IP / Application Gateway の使用量とクォータ
+
+> App Service の Premium v3 vCPU や PostgreSQL vCore は、SKU が提供されていても割り当てクォータが 0 / 不足の場合があります。その場合は Azure Portal の [クォータ] から引き上げを申請してください。
+
+### 4. リソースグループの作成
 
 ```bash
 az group create \
@@ -203,7 +241,7 @@ az group create \
   --location <LOCATION>   # 例: japaneast
 ```
 
-### 4. デプロイの実行
+### 5. デプロイの実行
 
 ```bash
 az deployment group create \
@@ -221,7 +259,7 @@ az deployment group what-if \
   --parameters infra/main.parameters.json
 ```
 
-### 5. デプロイ結果の確認
+### 6. デプロイ結果の確認
 
 デプロイ完了後、出力値を確認します。以降の手順で使用します。
 
@@ -310,6 +348,8 @@ web-app-ref-arch-iac/
 ├── README.md                       # 本ファイル (プロジェクト全体の説明)
 ├── docs/
 │   └── app-deployment.md           # アプリケーションのデプロイ手順 (疎結合)
+├── scripts/
+│   └── check-quota.sh              # デプロイ前のクォータ / SKU 確認スクリプト
 └── infra/
     ├── main.bicep                  # メインのオーケストレーション
     ├── main.parameters.json        # パラメーターファイル (デプロイの有無を選択)
