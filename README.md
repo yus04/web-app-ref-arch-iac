@@ -289,6 +289,8 @@ az deployment group show \
 
 ➡ **[docs/app-deployment.md](docs/app-deployment.md)** を参照してください。
 
+> **補足 (送信経路について)**: App Service は全送信トラフィックを VNet 経由 (`vnetRouteAllEnabled=true`) にしていますが、統合サブネットに送信インターネット経路 (NAT Gateway 等) は配置していません。そのため、デプロイ時の Oryx ビルド (`pip install`) が外部へ到達できず `504 GatewayTimeout` になることがあります。回避手順 (デプロイ中のみ `WEBSITE_VNET_ROUTE_ALL=0` にする) は [docs/app-deployment.md](docs/app-deployment.md#2-app-service-へのデプロイ) に記載しています。
+
 ---
 
 ## リソースの削除

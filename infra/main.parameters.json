@@ -26,9 +26,6 @@
     "deployDdosProtection": {
       "value": false
     },
-    "deployNatGateway": {
-      "value": true
-    },
     "appServiceSkuName": {
       "value": "P1v3"
     },

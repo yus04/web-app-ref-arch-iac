@@ -49,9 +49,6 @@ param deployApplicationInsights bool = true
 @description('Deploy a DDoS protection plan and associate it with the virtual network.')
 param deployDdosProtection bool = false
 
-@description('Deploy a NAT Gateway for the App Service integration subnet (required for outbound internet: Oryx build / App Insights telemetry).')
-param deployNatGateway bool = true
-
 // --------------------------- App Service parameters ------------------------
 
 @description('App Service plan SKU name. Zone redundancy requires a Premium v2/v3 SKU (Pxv2 / Pxv3).')
@@ -161,7 +158,6 @@ module network 'modules/network.bicep' = {
     privateEndpointSubnetPrefix: privateEndpointSubnetPrefix
     deployDdosProtection: deployDdosProtection
     ddosProtectionPlanId: deployDdosProtection ? ddosProtectionPlan.id : ''
-    deployNatGateway: deployNatGateway
     tags: tags
   }
 }
