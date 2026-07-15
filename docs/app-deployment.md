@@ -103,18 +103,39 @@ az webapp update --name "$APP_NAME" --resource-group "$RG" \
 ### Blob Storage (PDF 表示)
 
 - PDF を表示するには、`pdf` コンテナー (既定) に PDF ファイルをアップロードします。
+- Storage はデプロイ時に**パブリックネットワークアクセス無効** + **共有キーアクセス無効**でデプロイされるため、ローカルからアップロードするにはこれらを一時的に解除する必要があります。
 
 ```bash
 STORAGE=<STORAGE_ACCOUNT_NAME>       # デプロイ出力の storageAccountName
+
+# 1. 一時的にパブリックネットワークアクセスと共有キーアクセスを許可
+az storage account update \
+  --name "$STORAGE" \
+  --public-network-access Enabled \
+  --default-action Allow \
+  --allow-shared-key-access true
+
+# 2. PDF をアップロード (アカウントキー認証)
 az storage blob upload \
   --account-name "$STORAGE" \
   --container-name pdf \
   --name sample.pdf \
   --file ./sample.pdf \
-  --auth-mode login
+  --auth-mode key
+
+# 3. セキュリティ設定を元に戻す (必ず実行してください)
+az storage account update \
+  --name "$STORAGE" \
+  --public-network-access Disabled \
+  --default-action Deny \
+  --allow-shared-key-access false
 ```
 
-> Storage はパブリックアクセスが無効です。アップロードはプライベートエンドポイント経由 (VNet 内) で行うか、一時的にご自身の IP を許可してください。コンテナー内に PDF 以外のファイルが含まれるとアプリ側でエラー表示になります。
+> **セキュリティ上の注意**: 手順 3 を忘れると Storage がインターネットからアクセス可能かつキー認証が有効な状態のまま残ります。アップロード完了後は速やかに元に戻してください。
+>
+> **補足**: `--auth-mode login` (Entra ID 認証) を使う場合は、自分のユーザーに **Storage Blob Data Contributor** 以上のロールが必要です。キー認証 (`--auth-mode key`) ならロール割り当て不要で手軽にアップロードできます。
+>
+> コンテナー内に PDF 以外のファイルが含まれるとアプリ側でエラー表示になります。
 
 ### Application Insights (テレメトリ)
 
