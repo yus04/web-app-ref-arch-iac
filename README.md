@@ -279,6 +279,36 @@ az deployment group show \
 - アプリ設定 `AZURE_STORAGE_ACCOUNT_NAME` / `AZURE_STORAGE_CONTAINER_NAME` はデプロイ時に自動設定されます。
 - 既定で `pdf` コンテナーが作成されます。表示させたい PDF ファイルをこのコンテナーにアップロードしてください (Storage はパブリックアクセス無効のため、プライベートエンドポイント経由または一時的な IP 許可でアップロードします)。
 
+#### PDF ファイルのアップロード手順
+
+Storage はデプロイ時にパブリックアクセスが無効化されているため、ローカルから直接アップロードするにはネットワークルールを一時的に変更する必要があります。
+
+```bash
+STORAGE=<STORAGE_ACCOUNT_NAME>       # デプロイ出力の storageAccountName
+
+# 1. 一時的にパブリックネットワークアクセスを許可
+az storage account update \
+  --name "$STORAGE" \
+  --public-network-access Enabled \
+  --default-action Allow
+
+# 2. PDF をアップロード
+az storage blob upload \
+  --account-name "$STORAGE" \
+  --container-name pdf \
+  --name sample.pdf \
+  --file ./sample.pdf \
+  --auth-mode login
+
+# 3. パブリックアクセスを再度無効化 (必ず実行してください)
+az storage account update \
+  --name "$STORAGE" \
+  --public-network-access Disabled \
+  --default-action Deny
+```
+
+> **セキュリティ上の注意**: 手順 3 を忘れると Storage がインターネットからアクセス可能な状態のまま残ります。アップロード完了後は速やかにパブリックアクセスを無効化してください。
+
 ### Application Insights をデプロイした場合
 
 - App Service のマネージド ID には **Monitoring Metrics Publisher** ロールが付与済みです。
