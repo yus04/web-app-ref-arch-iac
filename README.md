@@ -281,33 +281,37 @@ az deployment group show \
 
 #### PDF ファイルのアップロード手順
 
-Storage はデプロイ時にパブリックアクセスが無効化されているため、ローカルから直接アップロードするにはネットワークルールを一時的に変更する必要があります。
+Storage はデプロイ時に**パブリックネットワークアクセス無効** + **共有キーアクセス無効**でデプロイされるため、ローカルからアップロードするにはこれらを一時的に解除する必要があります。
 
 ```bash
 STORAGE=<STORAGE_ACCOUNT_NAME>       # デプロイ出力の storageAccountName
 
-# 1. 一時的にパブリックネットワークアクセスを許可
+# 1. 一時的にパブリックネットワークアクセスと共有キーアクセスを許可
 az storage account update \
   --name "$STORAGE" \
   --public-network-access Enabled \
-  --default-action Allow
+  --default-action Allow \
+  --allow-shared-key-access true
 
-# 2. PDF をアップロード
+# 2. PDF をアップロード (アカウントキー認証)
 az storage blob upload \
   --account-name "$STORAGE" \
   --container-name pdf \
   --name sample.pdf \
   --file ./sample.pdf \
-  --auth-mode login
+  --auth-mode key
 
-# 3. パブリックアクセスを再度無効化 (必ず実行してください)
+# 3. セキュリティ設定を元に戻す (必ず実行してください)
 az storage account update \
   --name "$STORAGE" \
   --public-network-access Disabled \
-  --default-action Deny
+  --default-action Deny \
+  --allow-shared-key-access false
 ```
 
-> **セキュリティ上の注意**: 手順 3 を忘れると Storage がインターネットからアクセス可能な状態のまま残ります。アップロード完了後は速やかにパブリックアクセスを無効化してください。
+> **セキュリティ上の注意**: 手順 3 を忘れると Storage がインターネットからアクセス可能かつキー認証が有効な状態のまま残ります。アップロード完了後は速やかに元に戻してください。
+>
+> **補足**: `--auth-mode login` (Entra ID 認証) を使う場合は、自分のユーザーに **Storage Blob Data Contributor** 以上のロールが必要です。キー認証 (`--auth-mode key`) ならロール割り当て不要で手軽にアップロードできます。
 
 ### Application Insights をデプロイした場合
 
