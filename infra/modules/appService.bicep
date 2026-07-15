@@ -59,6 +59,9 @@ param storageAccountName string = ''
 @description('Blob container name.')
 param storageContainerName string = ''
 
+@description('Allow public network access to the App Service. Set to true when no Application Gateway is deployed.')
+param publicNetworkAccess bool = false
+
 @description('Tags applied to the App Service resources.')
 param tags object = {}
 
@@ -160,7 +163,7 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     httpsOnly: true
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: publicNetworkAccess ? 'Enabled' : 'Disabled'
     virtualNetworkSubnetId: appServiceSubnetId
     vnetRouteAllEnabled: true
     siteConfig: {

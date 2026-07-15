@@ -256,6 +256,7 @@ module appService 'modules/appService.bicep' = {
     enableStorage: deployStorage
     storageAccountName: storageAccountName
     storageContainerName: storageContainerName
+    publicNetworkAccess: !deployApplicationGateway
     tags: tags
   }
 }
