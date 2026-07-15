@@ -4,8 +4,6 @@ Azure 上でセキュアかつ可用性の高い Web アプリケーションを
 
 すべての受信・送信通信を仮想ネットワーク (VNet) 内のプライベートエンドポイント経由に閉じ込め、App Service のマネージド ID を用いたパスワードレスなリソースアクセスを実現します。
 
-![アーキテクチャ図](assets/architecture.png)
-
 ---
 
 ## 目次
@@ -54,39 +52,7 @@ Azure 上でセキュアかつ可用性の高い Web アプリケーションを
 
 本 IaC は、以下のリファレンスアーキテクチャ (App Service のマルチリージョン / ゾーン冗長 Web アプリ) を実装しています。図では Azure SQL Database が使われていますが、本 IaC では **Azure Database for PostgreSQL Flexible Server** を使用します。
 
-```mermaid
-flowchart LR
-    user([ユーザー]) --> agw
-
-    subgraph vnet[Virtual Network]
-        subgraph agwSubnet[Application Gateway サブネット]
-            agw[Application Gateway<br/>+ WAF]
-        end
-        subgraph appSubnet[App Service 統合サブネット]
-            vint[仮想インターフェイス<br/>VNet 統合]
-        end
-        subgraph peSubnet[プライベートエンドポイント サブネット]
-            peApp[App Service PE]
-            peDb[Database PE]
-            peCfg[Config PE - Key Vault]
-            peStg[Storage PE]
-        end
-    end
-
-    dns[(Private DNS Zones)] -. linked .- vnet
-
-    agw --> peApp --> app
-    vint --> peDb
-    vint --> peCfg
-    vint --> peStg
-
-    app[App Service<br/>ゾーン冗長 x3<br/>マネージド ID]
-    app --> vint
-    peDb --> db[(Azure Database<br/>for PostgreSQL)]
-    peCfg --> kv[Azure Key Vault]
-    peStg --> stg[Azure Storage]
-    app -. テレメトリ .-> ai[Application Insights]
-```
+![アーキテクチャ図](assets/architecture.png)
 
 | アーキテクチャ図の要素 | 本 IaC での実装 |
 | --- | --- |

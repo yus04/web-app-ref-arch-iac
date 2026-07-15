@@ -149,8 +149,8 @@ CFG_DEPLOY_AGW="$(pval deployApplicationGateway true)"
 CFG_DEPLOY_DDOS="$(pval deployDdosProtection false)"
 
 # PostgreSQL の SKU / ティアは postgresql モジュールの既定値
-PG_SKU="Standard_B1ms"
-PG_TIER="Burstable"
+PG_SKU="Standard_D2s_v3"
+PG_TIER="GeneralPurpose"
 
 # 設定中の App Service SKU を大文字化し、確認対象 SKU リストに追加 (重複除去)
 norm_sku() { echo "$1" | tr '[:lower:]' '[:upper:]'; }

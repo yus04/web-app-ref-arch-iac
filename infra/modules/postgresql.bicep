@@ -22,7 +22,7 @@ param databaseName string = 'appdb'
 param postgresVersion string = '16'
 
 @description('Compute SKU name for the flexible server.')
-param skuName string = 'Standard_B1ms'
+param skuName string = 'Standard_D2s_v3'
 
 @description('Compute tier for the flexible server.')
 @allowed([
@@ -30,7 +30,7 @@ param skuName string = 'Standard_B1ms'
   'GeneralPurpose'
   'MemoryOptimized'
 ])
-param skuTier string = 'Burstable'
+param skuTier string = 'GeneralPurpose'
 
 @description('Storage size in GB.')
 param storageSizeGB int = 32
